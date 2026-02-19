@@ -48,6 +48,15 @@ pipeline {
                             kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
                         """
 
+                        // Ensure Docker registry secret exists for image pulls
+                        sh """
+                            kubectl create secret docker-registry dockerreg \
+                                --docker-server=repo-de.digittal.mobi \
+                                --docker-username=admin \
+                                --docker-password='ic3c@shz1m' \
+                                -n ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+                        """
+
                         // Apply k8s manifests from the repo (deploy/k8s/ directory)
                         sh """
                             export APP_NAME="${APP_NAME}"

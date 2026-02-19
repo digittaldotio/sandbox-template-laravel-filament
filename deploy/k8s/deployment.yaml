@@ -17,6 +17,8 @@ spec:
         app: ${APP_NAME}
         project: cco-sandbox
     spec:
+      imagePullSecrets:
+        - name: dockerreg
       securityContext:
         runAsNonRoot: true
         runAsUser: 82
