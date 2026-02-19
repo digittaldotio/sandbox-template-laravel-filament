@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Auto-detect app name from the repo directory name
         APP_NAME       = "${env.JOB_NAME.split('/')[0]}"
-        REGISTRY       = 'dockerrepo.icecash.mobi:5000'
+        REGISTRY       = 'repo-de.digittal.mobi'
         IMAGE          = "${REGISTRY}/sandbox/${APP_NAME}"
         IMAGE_TAG      = "${IMAGE}:${BUILD_NUMBER}"
         IMAGE_LATEST   = "${IMAGE}:latest"

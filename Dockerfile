@@ -14,8 +14,6 @@ RUN npm ci
 # Copy source files needed for build
 COPY resources ./resources
 COPY vite.config.js ./
-COPY tailwind.config.js ./
-COPY postcss.config.js ./
 
 # Build assets
 RUN npm run build
@@ -24,6 +22,9 @@ RUN npm run build
 # Stage 2: Install PHP dependencies
 # ============================================================
 FROM composer:2 AS composer-builder
+
+# Install intl extension required by Filament
+RUN apk add --no-cache icu-dev && docker-php-ext-install intl
 
 WORKDIR /app
 
@@ -56,6 +57,7 @@ RUN apk add --no-cache \
     freetype-dev \
     oniguruma-dev \
     libxml2-dev \
+    icu-dev \
     mysql-client \
     $PHPIZE_DEPS \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -67,6 +69,7 @@ RUN apk add --no-cache \
         bcmath \
         gd \
         opcache \
+        intl \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del $PHPIZE_DEPS
