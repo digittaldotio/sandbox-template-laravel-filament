@@ -9,7 +9,7 @@ pipeline {
         IMAGE_TAG      = "${IMAGE}:${BUILD_NUMBER}"
         IMAGE_LATEST   = "${IMAGE}:latest"
         NAMESPACE      = 'cco-sandbox'
-        DOMAIN         = "${APP_NAME}.sandbox.digittal.mobi"
+        DOMAIN         = "${APP_NAME}-sandbox.digittal.mobi"
 
         // Cluster credentials
         KUBE_CREDENTIALS_ID = 'sandbox-kubeconfig'
