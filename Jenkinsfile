@@ -12,8 +12,8 @@ pipeline {
         DOMAIN         = "${APP_NAME}.sandbox.digittal.mobi"
 
         // Cluster credentials
-        KUBE_CREDENTIALS_ID = 'office-credentials'
-        KUBE_SERVER_URL     = 'https://10.0.16.141:6443'
+        KUBE_CREDENTIALS_ID = 'sandbox-kubeconfig'
+        KUBE_SERVER_URL     = 'https://136.243.89.211:6443'
     }
 
     triggers {
