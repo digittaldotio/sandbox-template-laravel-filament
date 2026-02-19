@@ -16,6 +16,15 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
     fi
 fi
 
+# Create .env if it doesn't exist (needed by Laravel)
+if [ ! -f /var/www/html/.env ]; then
+    if [ -f /var/www/html/.env.example ]; then
+        cp /var/www/html/.env.example /var/www/html/.env
+    else
+        touch /var/www/html/.env
+    fi
+fi
+
 # Generate app key if not set
 if [ -z "$APP_KEY" ]; then
     echo "Warning: APP_KEY is not set. Generating one..."
