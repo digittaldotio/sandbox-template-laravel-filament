@@ -11,9 +11,9 @@ pipeline {
         NAMESPACE      = 'cco-sandbox'
         DOMAIN         = "${APP_NAME}.sandbox.digittal.mobi"
 
-        // Cluster credentials — adjust if targeting a different cluster
-        KUBE_CREDENTIALS_ID = 'hetzner-credentials'
-        KUBE_SERVER_URL     = 'https://136.243.89.211:16443'
+        // Cluster credentials
+        KUBE_CREDENTIALS_ID = 'office-credentials'
+        KUBE_SERVER_URL     = 'https://10.0.16.141:6443'
     }
 
     triggers {
@@ -43,8 +43,12 @@ pipeline {
             steps {
                 script {
                     withKubeConfig([credentialsId: KUBE_CREDENTIALS_ID, serverUrl: KUBE_SERVER_URL]) {
+                        // Create namespace if it doesn't exist
+                        sh """
+                            kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+                        """
+
                         // Apply k8s manifests from the repo (deploy/k8s/ directory)
-                        // Substitute environment variables in the templates
                         sh """
                             export APP_NAME="${APP_NAME}"
                             export IMAGE_TAG="${IMAGE_TAG}"
@@ -60,7 +64,29 @@ pipeline {
                         // Verify rollout
                         sh """
                             kubectl rollout status deployment/${APP_NAME} \
-                                -n ${NAMESPACE} --timeout=120s
+                                -n ${NAMESPACE} --timeout=180s
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Show App Logs') {
+            steps {
+                script {
+                    withKubeConfig([credentialsId: KUBE_CREDENTIALS_ID, serverUrl: KUBE_SERVER_URL]) {
+                        // Stream app container logs for 30s so the dev can see
+                        // artisan migrate output, boot messages, etc.
+                        sh """
+                            echo "========================================="
+                            echo "  Application startup logs (30s window)"
+                            echo "========================================="
+                            timeout 30 kubectl logs -f deployment/${APP_NAME} \
+                                -c ${APP_NAME} -n ${NAMESPACE} --tail=100 2>/dev/null || true
+                            echo "========================================="
+                            echo "  Pod status"
+                            echo "========================================="
+                            kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME} -o wide
                         """
                     }
                 }
@@ -73,7 +99,25 @@ pipeline {
             echo "Deployed successfully: https://${DOMAIN}"
         }
         failure {
-            echo "Build or deploy failed for ${APP_NAME}"
+            script {
+                // On failure, try to show pod events and logs for debugging
+                try {
+                    withKubeConfig([credentialsId: KUBE_CREDENTIALS_ID, serverUrl: KUBE_SERVER_URL]) {
+                        sh """
+                            echo "========================================="
+                            echo "  DEBUG: Pod events and logs"
+                            echo "========================================="
+                            kubectl get events -n ${NAMESPACE} --sort-by='.lastTimestamp' | tail -20 || true
+                            echo "---"
+                            kubectl logs deployment/${APP_NAME} -c ${APP_NAME} \
+                                -n ${NAMESPACE} --tail=50 2>/dev/null || true
+                        """
+                    }
+                } catch (e) {
+                    echo "Could not fetch debug logs: ${e.message}"
+                }
+                echo "Build or deploy failed for ${APP_NAME}"
+            }
         }
     }
 }
